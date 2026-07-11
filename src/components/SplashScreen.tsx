@@ -9,9 +9,9 @@ interface SplashScreenProps {
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [progress, setProgress] = useState(0);
 
-  // Smooth progress count up over 3 seconds
+  // Smooth progress count up over 10 seconds
   useEffect(() => {
-    const duration = 3000; // 3 seconds
+    const duration = 10000; // 10 seconds
     const intervalTime = 30; // update every 30ms
     const step = (100 / (duration / intervalTime));
 
