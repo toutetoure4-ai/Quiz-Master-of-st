@@ -383,7 +383,17 @@ Consignes de qualité et de vérification :
                         recommendedTime: { type: Type.INTEGER, description: "Temps recommandé en secondes (entre 10 et 30)" },
                         imageSearchKeyword: { type: Type.STRING, description: "Mot-clé parmi : space, technology, science, math, history, geography, sport, cinema, music, games, general" }
                       },
-                      required: ["type", "questionText", "explanation", "recommendedTime", "imageSearchKeyword"]
+                      required: [
+                        "type", 
+                        "questionText", 
+                        "options", 
+                        "correctAnswerIndex", 
+                        "correctAnswerIndices", 
+                        "correctFreeText", 
+                        "explanation", 
+                        "recommendedTime", 
+                        "imageSearchKeyword"
+                      ]
                     }
                   }
                 },
