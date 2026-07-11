@@ -12,17 +12,6 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Initialisation sécurisée du SDK Google GenAI (Gemini)
-  const apiKey = process.env.GEMINI_API_KEY;
-  const ai = new GoogleGenAI({
-    apiKey: apiKey || "MOCK_KEY",
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      }
-    }
-  });
-
   // Cache en mémoire pour optimiser les performances
   const quizCache = new Map<string, any>();
 
@@ -295,27 +284,46 @@ async function startServer() {
         return res.status(400).json({ error: "Le sujet du quiz est requis." });
       }
 
+      // Sécurisation stricte des paramètres d'entrée
+      const safeCategory = String(category || "Culture générale");
+      const safeDifficulty = String(difficulty || "Moyen");
+      const safeTopic = String(topic).trim();
+
       // Recherche en cache d'abord pour optimiser les performances
-      const cacheKey = `${topic.trim().toLowerCase()}_${category}_${difficulty}_${count}`;
+      const cacheKey = `${safeTopic.toLowerCase()}_${safeCategory}_${safeDifficulty}_${count}`;
       if (quizCache.has(cacheKey)) {
         console.log(`[Cache Hit] Quiz trouvé pour la clé: ${cacheKey}`);
         return res.json(quizCache.get(cacheKey));
       }
 
-      // Fallback local instantané si pas de clé API
-      if (!process.env.GEMINI_API_KEY) {
-        console.warn("[API Key Missing] Utilisation de la bibliothèque locale de repli.");
-        const key = `${category.toLowerCase() === "sciences" ? "sciences" : "history"}_${difficulty.toLowerCase() === "facile" ? "facile" : difficulty.toLowerCase() === "difficile" ? "difficile" : "moyen"}`;
+      // Nettoyage et normalisation de la clé API
+      const rawApiKey = process.env.GEMINI_API_KEY;
+      const apiKey = rawApiKey ? rawApiKey.trim().replace(/^['"]|['"]$/g, "") : undefined;
+
+      // Fallback local instantané si aucune clé API n'est disponible
+      if (!apiKey) {
+        console.warn("[API Key Missing] Aucune clé API configurée. Utilisation de la bibliothèque locale de repli.");
+        const key = `${safeCategory.toLowerCase() === "sciences" ? "sciences" : "history"}_${safeDifficulty.toLowerCase() === "facile" ? "facile" : safeDifficulty.toLowerCase() === "difficile" ? "difficile" : "moyen"}`;
         const defaultQuiz = fallbackQuizzes[key] || fallbackQuizzes["general_default"];
-        const customQuiz = validateAndFixQuiz(defaultQuiz, category, difficulty, topic);
+        const customQuiz = validateAndFixQuiz(defaultQuiz, safeCategory, safeDifficulty, safeTopic);
         return res.json(customQuiz);
       }
 
-      // Prompt de conception enrichi
-      const prompt = `Crée un quiz éducatif, précis, passionnant et entièrement rédigé en français sur le thème : "${topic}".
+      // Initialisation dynamique du SDK pour assurer la fraîcheur de la clé
+      const ai = new GoogleGenAI({
+        apiKey: apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
+
+      // Prompt de conception enrichi en français
+      const prompt = `Crée un quiz éducatif, précis, passionnant et entièrement rédigé en français sur le thème : "${safeTopic}".
 Détails de configuration :
-- Catégorie : "${category}"
-- Difficulté adaptée impérativement pour le niveau : "${difficulty}" (Facile, Moyen, Difficile, Expert)
+- Catégorie : "${safeCategory}"
+- Difficulté adaptée impérativement pour le niveau : "${safeDifficulty}" (Facile, Moyen, Difficile, Expert)
 - Nombre de questions requis : exactement ${count} questions.
 - Types de questions autorisés : ${questionTypes.join(", ")}. Tu dois varier au maximum entre ces différents formats :
   1. "qcm_single" : Question à choix unique. Tu dois fournir l'array "options" de 4 choix et l'index correct de 0 à 3 "correctAnswerIndex".
@@ -332,18 +340,21 @@ Consignes de qualité et de vérification :
 - Choisis un mot-clé précis en anglais pour l'image ("imageSearchKeyword") parmi : "space", "technology", "science", "math", "history", "geography", "sport", "cinema", "music", "games", "general".
 - S'assurer de la cohérence stricte de la bonne réponse avec l'explication. Pas de réponses ambiguës.`;
 
-      // Tentative de génération avec gestion des pannes et réessais automatiques
+      // Cascade de modèles robustes pour assurer une compatibilité optimale (clés gratuites ou payantes)
+      const modelsToTry = [
+        "gemini-3.5-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-flash-latest"
+      ];
+
       let text = "";
       let attempts = 0;
-      const maxAttempts = 3;
+      const maxAttempts = modelsToTry.length;
       let lastError = null;
 
-      // Modèles à essayer en cascade pour maximiser la disponibilité
-      const modelsToTry = ["gemini-3.1-flash-lite", "gemini-3.5-flash"];
-
       while (attempts < maxAttempts && !text) {
+        const currentModel = modelsToTry[attempts];
         attempts++;
-        const currentModel = modelsToTry[(attempts - 1) % modelsToTry.length];
         try {
           console.log(`[Gemini Engine] Tentative de génération (${attempts}/${maxAttempts}) avec le modèle: ${currentModel}...`);
           
@@ -405,32 +416,32 @@ Consignes de qualité et de vérification :
           text = response.text || "";
         } catch (err: any) {
           lastError = err;
-          console.warn(`[Gemini Error] Échec de la tentative ${attempts}:`, err.message || err);
-          // Attendre un court instant avant de réessayer en cas d'erreur de charge (503 / 429)
-          await new Promise(resolve => setTimeout(resolve, 800));
+          console.warn(`[Gemini Error] Échec de la tentative ${attempts} avec ${currentModel}:`, err.message || err);
+          // Petite pause avant de tenter le modèle suivant
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
 
-      // Si toutes les tentatives ont échoué, on utilise la bibliothèque de secours locale
+      // Si l'IA n'a pas répondu ou que les appels ont échoué, utilisation de la bibliothèque locale de repli
       if (!text) {
         console.error("[Gemini Overload] Tous les essais de l'IA ont échoué. Chargement des questions de secours.");
-        const key = `${category.toLowerCase() === "sciences" ? "sciences" : "history"}_${difficulty.toLowerCase() === "facile" ? "facile" : difficulty.toLowerCase() === "difficile" ? "difficile" : "moyen"}`;
+        const key = `${safeCategory.toLowerCase() === "sciences" ? "sciences" : "history"}_${safeDifficulty.toLowerCase() === "facile" ? "facile" : safeDifficulty.toLowerCase() === "difficile" ? "difficile" : "moyen"}`;
         const defaultQuiz = fallbackQuizzes[key] || fallbackQuizzes["general_default"];
-        const customQuiz = validateAndFixQuiz(defaultQuiz, category, difficulty, topic);
+        const customQuiz = validateAndFixQuiz(defaultQuiz, safeCategory, safeDifficulty, safeTopic);
         return res.json(customQuiz);
       }
 
       // Analyse et auto-correction du JSON généré pour une robustesse ultime
       const rawQuiz = JSON.parse(text.trim());
-      const finalizedQuiz = validateAndFixQuiz(rawQuiz, category, difficulty, topic);
+      const finalizedQuiz = validateAndFixQuiz(rawQuiz, safeCategory, safeDifficulty, safeTopic);
 
-      // Enregistrement en cache pour les futures requêtes similaires
+      // Enregistrement en cache pour les requêtes identiques futures
       quizCache.set(cacheKey, finalizedQuiz);
 
       res.json(finalizedQuiz);
     } catch (error: any) {
       console.error("Erreur critique de génération dans le moteur de quiz:", error);
-      // En cas de crash inattendu, on renvoie un quiz générique sans crasher le serveur
+      // En cas de crash inattendu, on renvoie un quiz générique sans faire planter l'application
       try {
         const fallback = fallbackQuizzes["general_default"];
         const fallbackQuiz = validateAndFixQuiz(fallback, req.body.category || "Culture générale", req.body.difficulty || "Moyen", req.body.topic || "IA");

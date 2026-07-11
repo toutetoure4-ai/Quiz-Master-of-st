@@ -126,7 +126,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           </div>
         </div>
 
-        {/* Centered signature text "By Samba" requested by user */}
+        {/* Centered signature text "Samba" requested by user */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -137,7 +137,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             Créé par
           </span>
           <span className="text-sm font-black tracking-widest uppercase bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 bg-clip-text text-transparent">
-            By Samba
+            Samba
           </span>
         </motion.div>
 
