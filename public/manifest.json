@@ -1,0 +1,47 @@
+{
+  "name": "QuizMaster",
+  "short_name": "QuizMaster",
+  "description": "L'Arène de la Culture - Quiz de culture générale dynamique avec duels, boutique et modes multijoueurs.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "orientation": "portrait",
+  "categories": ["games", "education"],
+  "icons": [
+    {
+      "src": "/icon-192.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Lancer un Quiz",
+      "short_name": "Quiz",
+      "description": "Lancer une nouvelle partie de QuizMaster",
+      "url": "/",
+      "icons": [{ "src": "/icon-192.jpg", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
+}
