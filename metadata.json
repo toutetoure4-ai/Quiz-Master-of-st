@@ -1,0 +1,6 @@
+{
+  "name": "QuizMaster",
+  "description": "Une application mobile moderne de quiz en français, conçue avec Material Design 3, offrant des quiz par catégories, un profil utilisateur complet et des fonctionnalités extensibles.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
