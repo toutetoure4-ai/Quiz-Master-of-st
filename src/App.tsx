@@ -18,8 +18,9 @@ import BoutiqueScreen from "./components/BoutiqueScreen";
 import PremiumScreen from "./components/PremiumScreen";
 import AdminPanel from "./components/AdminPanel";
 import SplashScreen from "./components/SplashScreen";
+import LevelModeScreen from "./components/LevelModeScreen";
 
-import { Home, Search, PlusCircle, Trophy, User as UserIcon, Sparkles, Play, X, Award, Info, Gamepad2 } from "lucide-react";
+import { Home, Search, PlusCircle, Trophy, User as UserIcon, Sparkles, Play, X, Award, Info, Gamepad2, Target } from "lucide-react";
 
 export default function App() {
   // Splash Screen Active State
@@ -103,7 +104,14 @@ export default function App() {
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
   const [showStartModal, setShowStartModal] = useState<boolean>(false);
   const [selectedQuizToPreview, setSelectedQuizToPreview] = useState<Quiz | null>(null);
-  const [isInfiniteModeSelected, setIsInfiniteModeSelected] = useState<boolean>(false);
+  const [isLevelModeActive, setIsLevelModeActive] = useState<boolean>(false);
+  const [activeLevelNumber, setActiveLevelNumber] = useState<number>(1);
+
+  const handleStartLevelQuiz = (quiz: Quiz, levelNum: number) => {
+    setActiveQuiz(quiz);
+    setIsLevelModeActive(true);
+    setActiveLevelNumber(levelNum);
+  };
 
   const handleAuthSuccess = (profile: UserProfile) => {
     setUser(profile);
@@ -228,9 +236,32 @@ export default function App() {
         <QuizPlayer 
           user={user}
           quiz={activeQuiz}
-          onBack={() => setActiveQuiz(null)}
+          onBack={() => {
+            setActiveQuiz(null);
+            setIsLevelModeActive(false);
+          }}
           onFinishQuiz={handleFinishQuiz}
-          isInfiniteMode={isInfiniteModeSelected}
+          isLevelMode={isLevelModeActive}
+          levelNumber={activeLevelNumber}
+          onLevelCompleted={(lvlNum, score, totalQ, stars) => {
+            const topicKey = activeQuiz.category.toLowerCase().replace(/[^a-z0-9]/g, "_");
+            const storageKey = `qm_lvl_prog_${topicKey}`;
+            const saved = localStorage.getItem(storageKey);
+            let prog = saved ? JSON.parse(saved) : { unlockedLevel: 1, levelStars: {}, levelScores: {} };
+            
+            const nextUnlocked = Math.max(prog.unlockedLevel || 1, stars >= 1 ? lvlNum + 1 : prog.unlockedLevel || 1);
+            const newStars = Math.max((prog.levelStars && prog.levelStars[lvlNum]) || 0, stars);
+            const newBestScore = Math.max((prog.levelScores && prog.levelScores[lvlNum]) || 0, score);
+            
+            const updatedProg = {
+              unlockedLevel: nextUnlocked,
+              levelStars: { ...(prog.levelStars || {}), [lvlNum]: newStars },
+              levelScores: { ...(prog.levelScores || {}), [lvlNum]: newBestScore }
+            };
+            
+            localStorage.setItem(storageKey, JSON.stringify(updatedProg));
+            localStorage.setItem("qm_lvl_prog_culture_g_n_rale", JSON.stringify(updatedProg));
+          }}
           settings={settings}
         />
       ) : (
@@ -245,14 +276,23 @@ export default function App() {
                 quizzes={quizzes}
                 onSelectQuiz={(quiz) => {
                   setSelectedQuizToPreview(quiz);
-                  setIsInfiniteModeSelected(false); // Default standard
+                  setIsLevelModeActive(false);
                   setShowStartModal(true);
                 }}
                 onNavigateToTab={handleNavigateToTab}
                 onNavigateToBoutique={() => setActiveTab("Boutique")}
                 onNavigateToPremium={() => setActiveTab("Premium")}
                 onNavigateToAdmin={() => setActiveTab("AdminPanel")}
+                onNavigateToLevelMode={() => setActiveTab("Niveaux")}
                 onUpdateUser={setUser}
+              />
+            )}
+
+            {activeTab === "Niveaux" && user && (
+              <LevelModeScreen
+                user={user}
+                onBack={() => setActiveTab("Accueil")}
+                onStartLevelQuiz={handleStartLevelQuiz}
               />
             )}
 
@@ -285,7 +325,7 @@ export default function App() {
                 quizzes={quizzes}
                 onSelectQuiz={(quiz) => {
                   setSelectedQuizToPreview(quiz);
-                  setIsInfiniteModeSelected(false); // Default standard
+                  setIsLevelModeActive(false);
                   setShowStartModal(true);
                 }}
                 preselectedCategory={preselectedCategory}
@@ -352,6 +392,19 @@ export default function App() {
               >
                 <Home className="w-5 h-5" />
                 <span className="text-[10px] tracking-tight">Accueil</span>
+              </button>
+
+              <button
+                id="nav-levels"
+                onClick={() => setActiveTab("Niveaux")}
+                className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
+                  activeTab === "Niveaux" 
+                    ? "text-indigo-500 font-extrabold scale-105" 
+                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600"
+                }`}
+              >
+                <Sparkles className="w-5 h-5" />
+                <span className="text-[10px] tracking-tight font-bold">Niveaux IA</span>
               </button>
 
               <button
@@ -490,76 +543,47 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Mode Selector Option Cards */}
+                    {/* Mode Info & Action */}
                     <div className="space-y-3">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
-                        Choisis ton mode de jeu
+                        Mode de Jeu
                       </span>
 
-                      {/* Mode A: Standard */}
-                      <button
-                        onClick={() => setIsInfiniteModeSelected(false)}
-                        className={`w-full p-4 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
-                          !isInfiniteModeSelected
-                            ? "bg-blue-500/5 border-blue-500 ring-2 ring-blue-500/10"
-                            : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800/60 hover:border-blue-500/20"
-                        }`}
-                      >
-                        <div className="flex gap-3.5 items-center">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                            !isInfiniteModeSelected ? "bg-blue-500 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
-                          }`}>
-                            <Play className="w-5 h-5 fill-current pl-0.5" />
-                          </div>
-                          <div>
-                            <h5 className="text-xs font-black text-slate-800 dark:text-slate-200">
-                              Mode Classique (Chronométré)
-                            </h5>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5 leading-tight">
-                              Réponds aux {selectedQuizToPreview.questions.length} questions originales sous pression !
-                            </p>
-                          </div>
+                      {/* Standard Mode Card */}
+                      <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20 flex items-center gap-3.5">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shrink-0">
+                          <Play className="w-5 h-5 fill-current pl-0.5" />
                         </div>
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                          !isInfiniteModeSelected ? "border-blue-500 bg-blue-500 text-white" : "border-slate-200 dark:border-slate-700"
-                        }`}>
-                          {!isInfiniteModeSelected && <div className="w-2 h-2 bg-white rounded-full" />}
+                        <div>
+                          <h5 className="text-xs font-black text-slate-800 dark:text-slate-200">
+                            Mode Classique
+                          </h5>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5 leading-tight">
+                            {selectedQuizToPreview.questions.length} questions chronométrées.
+                          </p>
                         </div>
-                      </button>
+                      </div>
 
-                      {/* Mode B: Infinite AI Mode */}
+                      {/* Level Mode Shortcut */}
                       <button
-                        onClick={() => setIsInfiniteModeSelected(true)}
-                        className={`w-full p-4 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer relative overflow-hidden ${
-                          isInfiniteModeSelected
-                            ? "bg-indigo-500/5 border-indigo-500 ring-2 ring-indigo-500/10"
-                            : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800/60 hover:border-indigo-500/20"
-                        }`}
+                        onClick={() => {
+                          setShowStartModal(false);
+                          setActiveTab("Niveaux");
+                        }}
+                        className="w-full p-3.5 rounded-2xl border border-indigo-500/30 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-left flex items-center justify-between transition-all cursor-pointer"
                       >
-                        <div className="flex gap-3.5 items-center">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                            isInfiniteModeSelected ? "bg-indigo-500 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
-                          }`}>
-                            <Sparkles className="w-5 h-5" />
+                        <div className="flex gap-3 items-center">
+                          <div className="w-8 h-8 rounded-lg bg-indigo-500 text-white flex items-center justify-center shrink-0">
+                            <Sparkles className="w-4 h-4 text-yellow-300" />
                           </div>
                           <div>
-                            <div className="flex items-center gap-1.5">
-                              <h5 className="text-xs font-black text-slate-800 dark:text-slate-200">
-                                Mode Infini (Génération IA)
-                              </h5>
-                              <span className="text-[8px] font-black text-indigo-500 px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-950/40 rounded uppercase tracking-wider animate-pulse">
-                                IA
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5 leading-tight">
-                              Génération en continu de questions uniques. Le jeu ne s'arrête jamais !
+                            <h5 className="text-xs font-extrabold text-indigo-900 dark:text-indigo-200">
+                              Tester le Mode Niveaux IA 🎯
+                            </h5>
+                            <p className="text-[9px] text-indigo-600 dark:text-indigo-400 font-medium leading-tight">
+                              Progression niveau par niveau avec difficulté croissante
                             </p>
                           </div>
-                        </div>
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                          isInfiniteModeSelected ? "border-indigo-500 bg-indigo-500 text-white" : "border-slate-200 dark:border-slate-700"
-                        }`}>
-                          {isInfiniteModeSelected && <div className="w-2 h-2 bg-white rounded-full" />}
                         </div>
                       </button>
                     </div>
@@ -572,14 +596,10 @@ export default function App() {
                         setActiveQuiz(selectedQuizToPreview);
                         setShowStartModal(false);
                       }}
-                      className={`w-full py-4 text-white text-xs font-black rounded-2xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98 shadow-lg ${
-                        isInfiniteModeSelected
-                          ? "bg-indigo-500 hover:bg-indigo-600 shadow-indigo-500/15"
-                          : "bg-blue-500 hover:bg-blue-600 shadow-blue-500/15"
-                      }`}
+                      className="w-full py-4 text-white text-xs font-black rounded-2xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98 shadow-lg bg-blue-500 hover:bg-blue-600 shadow-blue-500/15"
                     >
                       <Play className="w-4.5 h-4.5 fill-current" />
-                      C'EST PARTI ! COMMENCER
+                      LANCER LE QUIZ CLASSIQUE
                     </button>
                   </div>
 

@@ -20,7 +20,9 @@ interface QuizPlayerProps {
     badgesUnlocked: Badge[],
     coinsReward?: number
   ) => void;
-  isInfiniteMode?: boolean;
+  isLevelMode?: boolean;
+  levelNumber?: number;
+  onLevelCompleted?: (levelNumber: number, score: number, totalQuestions: number, stars: number) => void;
   settings?: AppSettings;
 }
 
@@ -29,16 +31,17 @@ export default function QuizPlayer({
   quiz, 
   onBack, 
   onFinishQuiz, 
-  isInfiniteMode = false,
+  isLevelMode = false,
+  levelNumber,
+  onLevelCompleted,
   settings = { darkMode: false, language: "fr", notificationsEnabled: true, privacyMode: false, textSize: "medium", ttsEnabled: false, ttsRate: 1.0 }
 }: QuizPlayerProps) {
   // Draft / Resume states
   const [hasDraftChecked, setHasDraftChecked] = useState(false);
   const [foundDraft, setFoundDraft] = useState<QuizAttempt | null>(null);
 
-  // Active questions pool (dynamic in Infinite Mode)
+  // Active questions pool
   const [activeQuestions, setActiveQuestions] = useState<Question[]>(quiz.questions);
-  const [isPreloading, setIsPreloading] = useState(false);
 
   // Core quiz player states
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
@@ -85,58 +88,6 @@ export default function QuizPlayer({
   const [responseTimes, setResponseTimes] = useState<number[]>([]);
 
   const currentQuestion = activeQuestions[currentQuestionIdx] || activeQuestions[0];
-
-  const preloadMoreQuestions = async () => {
-    if (isPreloading || !isInfiniteMode) return;
-    setIsPreloading(true);
-    try {
-      console.log("Préchargement de nouvelles questions en arrière-plan...");
-      const playedIds = activeQuestions.map(q => q.id);
-
-      const res = await fetch("/api/gemini/generate-quiz", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          topic: quiz.title.replace("Quiz sur", "").replace("Quiz de", "").replace("Super Quiz de", "").trim() || quiz.category,
-          category: quiz.category,
-          difficulty: quiz.difficulty,
-          count: 3, // Generates 3 more questions
-          playedQuestionIds: playedIds
-        })
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data && Array.isArray(data.questions) && data.questions.length > 0) {
-          const newQs = data.questions.map((q: any, idx: number) => ({
-            id: `q-ai-inf-${idx}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-            questionText: q.questionText,
-            type: q.type || "qcm_single",
-            options: q.options || [],
-            correctAnswerIndex: q.correctAnswerIndex,
-            correctAnswerIndices: q.correctAnswerIndices || [],
-            correctFreeText: q.correctFreeText || "",
-            explanation: q.explanation || "",
-            recommendedTime: q.recommendedTime || 15,
-            imageUrl: q.imageUrl || "",
-            category: quiz.category,
-            difficulty: quiz.difficulty
-          }));
-          setActiveQuestions(prev => [...prev, ...newQs]);
-          
-          // Increase global timer dynamically
-          const extraTime = newQs.reduce((acc: number, q: any) => acc + (q.recommendedTime || 15), 0);
-          setGlobalTimeLeft(prev => prev + extraTime);
-          
-          console.log("Préchargement réussi !");
-        }
-      }
-    } catch (err) {
-      console.error("Échec du préchargement en arrière-plan:", err);
-    } finally {
-      setIsPreloading(false);
-    }
-  };
 
   // Check for active draft when quiz mounts
   useEffect(() => {
@@ -451,18 +402,9 @@ export default function QuizPlayer({
 
   const handleNext = () => {
     if (currentQuestionIdx < activeQuestions.length - 1) {
-      // Trigger background preload when we are close to the end of the batch
-      if (isInfiniteMode && currentQuestionIdx >= activeQuestions.length - 3) {
-        preloadMoreQuestions();
-      }
       setCurrentQuestionIdx((prev) => prev + 1);
     } else {
-      if (isInfiniteMode) {
-        // At the very end in Infinite Mode, if we click Next but haven't preloaded, try preloading
-        preloadMoreQuestions();
-      } else {
-        handleCompleteQuiz(false);
-      }
+      handleCompleteQuiz(false);
     }
   };
 
@@ -477,6 +419,12 @@ export default function QuizPlayer({
 
     const finalScore = score;
     const totalQ = activeQuestions.length;
+    const accuracyPct = Math.round((finalScore / totalQ) * 100);
+    const starsEarned = accuracyPct === 100 ? 3 : accuracyPct >= 80 ? 2 : accuracyPct >= 60 ? 1 : 0;
+
+    if (isLevelMode && levelNumber && onLevelCompleted) {
+      onLevelCompleted(levelNumber, finalScore, totalQ, starsEarned);
+    }
 
     // SCORING WITH MULTIPLIERS
     // Base XP: 200 XP per correct answer
@@ -956,13 +904,12 @@ export default function QuizPlayer({
               {quiz.category}
             </span>
             <h3 className="text-xs font-bold text-slate-400 mt-1 truncate flex items-center gap-1.5">
-              {isInfiniteMode ? (
+              {isLevelMode ? (
                 <>
-                  <span className="relative flex h-2 w-2 shrink-0">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                  <span className="text-indigo-500 font-extrabold uppercase text-[10px] bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded">
+                    Niveau {levelNumber || 1}
                   </span>
-                  <span className="text-blue-500 font-extrabold uppercase text-[10px]">Mode Infini</span> • Q{currentQuestionIdx + 1}
+                  • Q{currentQuestionIdx + 1} sur {activeQuestions.length}
                 </>
               ) : (
                 `Q${currentQuestionIdx + 1} sur ${activeQuestions.length}`
@@ -1287,15 +1234,9 @@ export default function QuizPlayer({
             <>
               <button
                 onClick={handleNext}
-                disabled={isPreloading && currentQuestionIdx === activeQuestions.length - 1}
-                className="w-full py-4 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white rounded-2xl text-xs font-black flex items-center justify-center gap-1.5 shadow-lg shadow-blue-500/10 cursor-pointer active:scale-98 transition-all"
+                className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl text-xs font-black flex items-center justify-center gap-1.5 shadow-lg shadow-blue-500/10 cursor-pointer active:scale-98 transition-all"
               >
-                {isPreloading && currentQuestionIdx === activeQuestions.length - 1 ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    Génération de nouvelles questions...
-                  </>
-                ) : currentQuestionIdx < activeQuestions.length - 1 || isInfiniteMode ? (
+                {currentQuestionIdx < activeQuestions.length - 1 ? (
                   <>
                     Question suivante
                     <ChevronRight className="w-4.5 h-4.5" />
@@ -1307,16 +1248,6 @@ export default function QuizPlayer({
                   </>
                 )}
               </button>
-              
-              {isInfiniteMode && (
-                <button
-                  onClick={() => handleCompleteQuiz(false)}
-                  className="w-full py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-98"
-                >
-                  <Award className="w-4.5 h-4.5 text-indigo-500 animate-pulse" />
-                  Terminer et sauvegarder mon score actuel ({score} pts)
-                </button>
-              )}
             </>
           ) : (
             <>

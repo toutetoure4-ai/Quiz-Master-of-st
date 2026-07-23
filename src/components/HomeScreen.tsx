@@ -4,7 +4,7 @@ import { UserProfile, Quiz, DailyMission } from "../types";
 import { CATEGORIES } from "../data";
 import IconHelper from "./IconHelper";
 import { dbService } from "../lib/firebase";
-import { Play, Flame, Star, ChevronRight, GraduationCap, Coins, Crown, Settings, Check, Target, Gift } from "lucide-react";
+import { Play, Flame, Star, ChevronRight, GraduationCap, Coins, Crown, Settings, Check, Target, Gift, Sparkles } from "lucide-react";
 
 interface HomeScreenProps {
   user: UserProfile;
@@ -14,6 +14,7 @@ interface HomeScreenProps {
   onNavigateToBoutique: () => void;
   onNavigateToPremium: () => void;
   onNavigateToAdmin: () => void;
+  onNavigateToLevelMode: () => void;
   onUpdateUser: (user: UserProfile) => void;
 }
 
@@ -25,6 +26,7 @@ export default function HomeScreen({
   onNavigateToBoutique,
   onNavigateToPremium,
   onNavigateToAdmin,
+  onNavigateToLevelMode,
   onUpdateUser
 }: HomeScreenProps) {
   const [claimingId, setClaimingId] = useState<string | null>(null);
@@ -184,6 +186,39 @@ export default function HomeScreen({
           <div className="flex justify-between items-center text-[10px] text-blue-100 font-semibold mt-1.5">
             <span>{user.xp} XP</span>
             <span>{nextLevelXp} XP pour Niv. {user.level + 1}</span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Mode Niveaux IA (Progression) Banner */}
+      <motion.div
+        initial={{ y: 15, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        onClick={onNavigateToLevelMode}
+        className="p-5 rounded-3xl bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 text-white shadow-xl shadow-indigo-500/20 cursor-pointer relative overflow-hidden active:scale-98 transition-all border border-indigo-400/30"
+      >
+        <div className="absolute right-0 top-0 -mr-6 -mt-6 w-32 h-32 bg-white/10 rounded-full blur-xl" />
+        <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 text-white shadow-inner">
+              <Sparkles className="w-6 h-6 animate-pulse text-yellow-300" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-white">
+                  MODE PROGRESSION IA
+                </span>
+              </div>
+              <h3 className="text-sm font-black font-display text-white mt-1">
+                Mode Niveaux IA (De + en + difficile)
+              </h3>
+              <p className="text-[10px] text-indigo-100 font-medium mt-0.5">
+                Questions inédites à chaque palier. Débloque tous les niveaux !
+              </p>
+            </div>
+          </div>
+          <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0 ml-2">
+            <ChevronRight className="w-5 h-5 text-white" />
           </div>
         </div>
       </motion.div>

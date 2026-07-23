@@ -274,6 +274,7 @@ async function startServer() {
         category = "Culture générale", 
         difficulty = "Moyen", 
         count = 5,
+        level,
         playedQuestionIds = [],
         failedQuestionIds = [],
         userPerformance = "",
@@ -286,11 +287,23 @@ async function startServer() {
 
       // Sécurisation stricte des paramètres d'entrée
       const safeCategory = String(category || "Culture générale");
-      const safeDifficulty = String(difficulty || "Moyen");
       const safeTopic = String(topic).trim();
+      
+      // Gestion intelligente de la difficulté progressive selon le Niveau
+      const safeLevel = level ? Math.max(1, Number(level) || 1) : null;
+      let calcDifficulty = String(difficulty || "Moyen");
+      if (safeLevel) {
+        if (safeLevel <= 3) calcDifficulty = "Facile";
+        else if (safeLevel <= 6) calcDifficulty = "Moyen";
+        else if (safeLevel <= 9) calcDifficulty = "Difficile";
+        else calcDifficulty = "Expert";
+      }
 
-      // Recherche en cache d'abord pour optimiser les performances
-      const cacheKey = `${safeTopic.toLowerCase()}_${safeCategory}_${safeDifficulty}_${count}`;
+      // Recherche en cache pour optimiser les performances (si hors mode niveau instantané)
+      const cacheKey = safeLevel 
+        ? `lvl_${safeLevel}_${safeTopic.toLowerCase()}_${safeCategory}_${calcDifficulty}_${count}_${Math.floor(Date.now() / 600000)}`
+        : `${safeTopic.toLowerCase()}_${safeCategory}_${calcDifficulty}_${count}`;
+
       if (quizCache.has(cacheKey)) {
         console.log(`[Cache Hit] Quiz trouvé pour la clé: ${cacheKey}`);
         return res.json(quizCache.get(cacheKey));
@@ -303,9 +316,9 @@ async function startServer() {
       // Fallback local instantané si aucune clé API n'est disponible
       if (!apiKey) {
         console.warn("[API Key Missing] Aucune clé API configurée. Utilisation de la bibliothèque locale de repli.");
-        const key = `${safeCategory.toLowerCase() === "sciences" ? "sciences" : "history"}_${safeDifficulty.toLowerCase() === "facile" ? "facile" : safeDifficulty.toLowerCase() === "difficile" ? "difficile" : "moyen"}`;
+        const key = `${safeCategory.toLowerCase() === "sciences" ? "sciences" : "history"}_${calcDifficulty.toLowerCase() === "facile" ? "facile" : calcDifficulty.toLowerCase() === "difficile" ? "difficile" : "moyen"}`;
         const defaultQuiz = fallbackQuizzes[key] || fallbackQuizzes["general_default"];
-        const customQuiz = validateAndFixQuiz(defaultQuiz, safeCategory, safeDifficulty, safeTopic);
+        const customQuiz = validateAndFixQuiz(defaultQuiz, safeCategory, calcDifficulty, safeTopic);
         return res.json(customQuiz);
       }
 
@@ -320,10 +333,16 @@ async function startServer() {
       });
 
       // Prompt de conception enrichi en français
+      const levelPromptInfo = safeLevel 
+        ? `- Mode : PROGRESSION PAR NIVEAU IA (Niveau ${safeLevel})
+- Consigne de difficulté : Il s'agit du NIVEAU ${safeLevel}. Pour le Niveau 1-3, propose des questions de base accessibles. Pour les Niveaux supérieurs (ex: Niveau ${safeLevel}), monte fortement en exigence avec des faits précis, des nuances historiques/scientifiques et des pièges stimulants. Génère des questions 100% nouvelles et variées.`
+        : "";
+
       const prompt = `Crée un quiz éducatif, précis, passionnant et entièrement rédigé en français sur le thème : "${safeTopic}".
 Détails de configuration :
 - Catégorie : "${safeCategory}"
-- Difficulté adaptée impérativement pour le niveau : "${safeDifficulty}" (Facile, Moyen, Difficile, Expert)
+- Difficulté officielle requise : "${calcDifficulty}" (Facile, Moyen, Difficile, Expert)
+${levelPromptInfo}
 - Nombre de questions requis : exactement ${count} questions.
 - Types de questions autorisés : ${questionTypes.join(", ")}. Tu dois varier au maximum entre ces différents formats :
   1. "qcm_single" : Question à choix unique. Tu dois fournir l'array "options" de 4 choix et l'index correct de 0 à 3 "correctAnswerIndex".
@@ -342,7 +361,7 @@ Consignes de qualité et de vérification :
 
       // Cascade de modèles robustes pour assurer une compatibilité optimale (clés gratuites ou payantes)
       const modelsToTry = [
-        "gemini-3.5-flash",
+        "gemini-3.6-flash",
         "gemini-3.1-flash-lite",
         "gemini-flash-latest"
       ];
@@ -425,15 +444,15 @@ Consignes de qualité et de vérification :
       // Si l'IA n'a pas répondu ou que les appels ont échoué, utilisation de la bibliothèque locale de repli
       if (!text) {
         console.error("[Gemini Overload] Tous les essais de l'IA ont échoué. Chargement des questions de secours.");
-        const key = `${safeCategory.toLowerCase() === "sciences" ? "sciences" : "history"}_${safeDifficulty.toLowerCase() === "facile" ? "facile" : safeDifficulty.toLowerCase() === "difficile" ? "difficile" : "moyen"}`;
+        const key = `${safeCategory.toLowerCase() === "sciences" ? "sciences" : "history"}_${calcDifficulty.toLowerCase() === "facile" ? "facile" : calcDifficulty.toLowerCase() === "difficile" ? "difficile" : "moyen"}`;
         const defaultQuiz = fallbackQuizzes[key] || fallbackQuizzes["general_default"];
-        const customQuiz = validateAndFixQuiz(defaultQuiz, safeCategory, safeDifficulty, safeTopic);
+        const customQuiz = validateAndFixQuiz(defaultQuiz, safeCategory, calcDifficulty, safeTopic);
         return res.json(customQuiz);
       }
 
       // Analyse et auto-correction du JSON généré pour une robustesse ultime
       const rawQuiz = JSON.parse(text.trim());
-      const finalizedQuiz = validateAndFixQuiz(rawQuiz, safeCategory, safeDifficulty, safeTopic);
+      const finalizedQuiz = validateAndFixQuiz(rawQuiz, safeCategory, calcDifficulty, safeTopic);
 
       // Enregistrement en cache pour les requêtes identiques futures
       quizCache.set(cacheKey, finalizedQuiz);
