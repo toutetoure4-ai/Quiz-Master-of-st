@@ -1,0 +1,15 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Redirection automatique des requêtes API vers les Netlify Functions
+[[redirects]]
+  from = "/api/gemini/generate-quiz"
+  to = "/.netlify/functions/generate-quiz"
+  status = 200
+
+# Redirection SPA React (pour les routes de l'application)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

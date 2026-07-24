@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { UserProfile, Quiz, DailyMission } from "../types";
+import { UserProfile, Quiz, DailyMission, AppSettings } from "../types";
 import { CATEGORIES } from "../data";
 import IconHelper from "./IconHelper";
 import { dbService } from "../lib/firebase";
-import { Play, Flame, Star, ChevronRight, GraduationCap, Coins, Crown, Settings, Check, Target, Gift, Sparkles } from "lucide-react";
+import { t, Language } from "../lib/i18n";
+import { Play, Flame, Star, ChevronRight, GraduationCap, Coins, Crown, Check, Target, Gift, Sparkles } from "lucide-react";
 
 interface HomeScreenProps {
   user: UserProfile;
   quizzes: Quiz[];
+  settings?: AppSettings;
   onSelectQuiz: (quiz: Quiz) => void;
   onNavigateToTab: (tab: string, filterCategory?: string) => void;
   onNavigateToBoutique: () => void;
@@ -20,7 +22,8 @@ interface HomeScreenProps {
 
 export default function HomeScreen({ 
   user, 
-  quizzes, 
+  quizzes,
+  settings, 
   onSelectQuiz, 
   onNavigateToTab,
   onNavigateToBoutique,
@@ -31,6 +34,8 @@ export default function HomeScreen({
 }: HomeScreenProps) {
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [successAnimation, setSuccessAnimation] = useState<{ active: boolean; text: string }>({ active: false, text: "" });
+
+  const lang: Language = settings?.language || "fr";
 
   // Sort quizzes by playsCount to get popular ones
   const popularQuizzes = [...quizzes].sort((a, b) => b.playsCount - a.playsCount).slice(0, 3);
@@ -105,13 +110,13 @@ export default function HomeScreen({
       {/* Welcome header & Interactive Wallet Display */}
       <div className="flex items-center justify-between">
         <div>
-          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Bienvenue</span>
+          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">{t("welcome", lang)}</span>
           <h2 className="text-xl font-extrabold font-display text-slate-950 dark:text-white flex items-center gap-1.5 mt-0.5">
-            Salut, {user.pseudo || "Joueur"} ! 👋
+            {t("hello", lang)}, {user.pseudo || "Joueur"} ! 👋
           </h2>
         </div>
         
-        {/* Wallet, Premium & Admin Shortcuts */}
+        {/* Wallet & Premium Shortcuts */}
         <div className="flex items-center gap-1.5 select-none">
           {/* Wallet */}
           <button 
@@ -136,15 +141,6 @@ export default function HomeScreen({
             title={user.isPremium ? "Abonnement Premium Actif ⭐" : "S'abonner au Premium"}
           >
             <Crown className={`w-4 h-4 ${user.isPremium ? "fill-amber-500/10 animate-pulse" : ""}`} />
-          </button>
-
-          {/* Admin panel trigger */}
-          <button
-            onClick={onNavigateToAdmin}
-            className="p-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-950/40 dark:hover:bg-red-950/70 text-red-500 border border-red-200 dark:border-red-900/30 rounded-xl flex items-center justify-center cursor-pointer transition-all active:scale-95"
-            title="Administration"
-          >
-            <Settings className="w-4 h-4" />
           </button>
         </div>
       </div>

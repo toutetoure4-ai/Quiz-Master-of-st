@@ -9,9 +9,9 @@ interface SplashScreenProps {
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [progress, setProgress] = useState(0);
 
-  // Smooth progress count up over 10 seconds
+  // Smooth progress count up over 4 seconds
   useEffect(() => {
-    const duration = 10000; // 10 seconds
+    const duration = 4000; // 4 seconds
     const intervalTime = 30; // update every 30ms
     const step = (100 / (duration / intervalTime));
 
@@ -108,21 +108,58 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       </div>
 
       {/* Loading Progress Indicator & Signature */}
-      <div className="w-full max-w-xs flex flex-col items-center space-y-8 pb-6">
+      <div className="w-full max-w-xs flex flex-col items-center space-y-6 pb-6">
         
-        {/* Loading Progress Bar & Percentage */}
-        <div className="w-full space-y-2">
-          <div className="flex items-center justify-between text-[10px] font-black font-mono text-slate-400 px-1">
-            <span className="uppercase tracking-widest animate-pulse">Chargement</span>
-            <span>{Math.round(progress)}%</span>
-          </div>
-          
-          <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800 p-[1px]">
-            <motion.div 
-              className="h-full rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-amber-500"
-              style={{ width: `${progress}%` }}
-              layoutId="splash-progress-bar"
-            />
+        {/* Modern Circular Progress Indicator */}
+        <div className="relative flex flex-col items-center justify-center my-1">
+          <div className="relative w-28 h-28 flex items-center justify-center">
+            {/* Ambient subtle glow ring */}
+            <div className="absolute inset-0 rounded-full bg-indigo-500/15 blur-md animate-pulse" />
+            
+            <svg className="w-full h-full -rotate-90 drop-shadow-[0_0_12px_rgba(99,102,241,0.5)]" viewBox="0 0 88 88">
+              <defs>
+                <linearGradient id="splashProgressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#3b82f6" />
+                  <stop offset="50%" stopColor="#6366f1" />
+                  <stop offset="100%" stopColor="#f59e0b" />
+                </linearGradient>
+              </defs>
+              
+              {/* Background track circle */}
+              <circle
+                cx="44"
+                cy="44"
+                r="36"
+                className="text-slate-900/90 stroke-current"
+                strokeWidth="5.5"
+                fill="transparent"
+              />
+              
+              {/* Animated Progress circle */}
+              <circle
+                cx="44"
+                cy="44"
+                r="36"
+                stroke="url(#splashProgressGradient)"
+                strokeWidth="5.5"
+                strokeLinecap="round"
+                fill="transparent"
+                strokeDasharray="226.19"
+                strokeDashoffset={226.19 - (226.19 * progress) / 100}
+                className="transition-all duration-75 ease-out"
+              />
+            </svg>
+
+            {/* Percentage Display at the center of the circle */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+              <span className="text-lg font-black font-mono tracking-tight text-white drop-shadow flex items-baseline justify-center">
+                {Math.round(progress)}
+                <span className="text-xs font-extrabold text-amber-400 ml-0.5">%</span>
+              </span>
+              <span className="text-[8px] font-black uppercase tracking-widest text-indigo-300/80 animate-pulse -mt-0.5">
+                Chargement
+              </span>
+            </div>
           </div>
         </div>
 

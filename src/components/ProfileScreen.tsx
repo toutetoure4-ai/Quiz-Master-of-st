@@ -2,10 +2,11 @@ import { useState } from "react";
 import { UserProfile, Question } from "../types";
 import { INITIAL_BADGES, DEFAULT_QUIZZES } from "../data";
 import { dbService } from "../lib/firebase";
+import EditProfileModal from "./EditProfileModal";
 import IconHelper from "./IconHelper";
 import { 
   Settings, Calendar, Award, Zap, Star, ShieldAlert, CheckCircle, Clock, 
-  BookOpen, ChevronDown, ChevronUp, Trash2, HelpCircle 
+  BookOpen, ChevronDown, ChevronUp, Trash2, HelpCircle, Edit3, Camera 
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -13,11 +14,13 @@ interface ProfileScreenProps {
   user: UserProfile;
   onNavigateToSettings: () => void;
   onUpdateUser?: (updated: UserProfile) => void;
+  onNavigateToPremium?: () => void;
 }
 
-export default function ProfileScreen({ user, onNavigateToSettings, onUpdateUser }: ProfileScreenProps) {
+export default function ProfileScreen({ user, onNavigateToSettings, onUpdateUser, onNavigateToPremium }: ProfileScreenProps) {
   const [activeReviewTab, setActiveReviewTab] = useState<"failed" | "favorites">("failed");
   const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
 
   // Dynamic calculations
   const totalPlays = user.history.length;
@@ -118,17 +121,38 @@ export default function ProfileScreen({ user, onNavigateToSettings, onUpdateUser
             {user.joinDate}
           </div>
 
-          <img 
-            src={user.avatarUrl} 
-            alt="Profile Avatar" 
-            className="w-20 h-20 rounded-3xl bg-slate-100 dark:bg-slate-800 border-2 border-blue-500/20 android-shadow select-none mb-3"
-          />
+          <div 
+            onClick={() => setIsEditModalOpen(true)}
+            className="relative cursor-pointer group mb-3"
+            title="Cliquer pour changer d'avatar"
+          >
+            <img 
+              src={user.avatarUrl} 
+              alt="Profile Avatar" 
+              className="w-20 h-20 rounded-3xl bg-slate-100 dark:bg-slate-800 border-2 border-blue-500/20 android-shadow select-none group-hover:opacity-90 transition-opacity object-cover"
+            />
+            <div className="absolute -bottom-1 -right-1 bg-indigo-500 hover:bg-indigo-600 text-white p-1.5 rounded-xl shadow-lg border-2 border-white dark:border-slate-900 group-hover:scale-110 transition-transform">
+              <Camera className="w-3.5 h-3.5" />
+            </div>
+          </div>
 
-          <h3 className="text-base font-black text-slate-900 dark:text-white">{user.fullName}</h3>
+          <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+            {user.fullName}
+          </h3>
           <span className="text-xs font-bold text-slate-400 mt-0.5">@{user.pseudo}</span>
 
-          <div className="mt-4 flex items-center gap-1.5 px-4 py-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-500 rounded-full font-black text-xs font-display border border-blue-500/10">
-            Niveau {user.level} • {user.xp} XP
+          <div className="flex items-center gap-2 mt-3">
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-300 rounded-full text-xs font-extrabold flex items-center gap-1.5 border border-indigo-500/20 transition-all cursor-pointer active:scale-95"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Éditer Profil</span>
+            </button>
+
+            <div className="px-3.5 py-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-500 rounded-full font-black text-xs font-display border border-blue-500/10">
+              Niv. {user.level} • {user.xp} XP
+            </div>
           </div>
         </div>
 
@@ -439,6 +463,17 @@ export default function ProfileScreen({ user, onNavigateToSettings, onUpdateUser
         </div>
 
       </div>
+
+      {/* Edit Profile & Avatar Modal */}
+      {onUpdateUser && (
+        <EditProfileModal
+          user={user}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onUpdateUser={onUpdateUser}
+          onNavigateToPremium={onNavigateToPremium}
+        />
+      )}
 
     </div>
   );

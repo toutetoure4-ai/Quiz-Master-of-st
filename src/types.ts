@@ -268,11 +268,12 @@ export interface NotificationPreferences {
 
 export interface AppSettings {
   darkMode: boolean;
-  language: "fr";
+  language: "fr" | "en" | "es";
   notificationsEnabled: boolean;
   privacyMode: boolean;
   ttsEnabled?: boolean;
   ttsRate?: number; // Speech rate 0.5 - 2.0
   textSize?: "small" | "medium" | "large" | "xlarge";
+  soundEffectsEnabled?: boolean;
   notificationPreferences?: NotificationPreferences;
 }

@@ -22,11 +22,6 @@ export default function AndroidFrame({ children, darkMode }: AndroidFrameProps) 
         <div className="flex-1 w-full flex flex-col overflow-hidden relative">
           {children}
         </div>
-
-        {/* Android Navigation Home Bar (Only on desktop frame) */}
-        <div className="w-full h-6 pb-2 flex items-center justify-center bg-white dark:bg-slate-950 transition-colors duration-300 shrink-0 z-40">
-          <div className="w-32 h-1 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
-        </div>
       </div>
     </div>
   );

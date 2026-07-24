@@ -14,32 +14,32 @@ interface LevelModeScreenProps {
 
 // Preset categories for Level Mode
 const LEVEL_CATEGORIES = [
+  { id: "Culture Islamique", name: "Savoir & Culture Islamique", icon: "🕌", color: "from-emerald-500 to-teal-600" },
   { id: "Culture générale", name: "Culture Générale", icon: "🧠", color: "from-blue-500 to-indigo-600" },
   { id: "Sciences", name: "Sciences & Nature", icon: "🔬", color: "from-emerald-500 to-teal-600" },
-  { id: "Histoire", name: "Histoire du Monde", icon: "🏛️", color: "from-amber-500 to-orange-600" },
+  { id: "Histoire", name: "Histoire & Civilisations", icon: "🏛️", color: "from-amber-500 to-orange-600" },
   { id: "Géographie", name: "Géographie & Pays", icon: "🌍", color: "from-cyan-500 to-blue-600" },
   { id: "Technologie", name: "Tech & IA", icon: "💻", color: "from-purple-500 to-indigo-600" },
   { id: "Cinéma", name: "Cinéma & Séries", icon: "🎬", color: "from-pink-500 to-rose-600" },
   { id: "Gaming", name: "Gaming & Esport", icon: "🎮", color: "from-violet-500 to-purple-600" },
-  { id: "Manga", name: "Manga & Anime", icon: "⚡", color: "from-yellow-500 to-amber-600" },
 ];
 
 export const LEVEL_TITLES: { [key: number]: { title: string; diff: "Facile" | "Moyen" | "Difficile" | "Expert"; color: string } } = {
-  1: { title: "Débutant", diff: "Facile", color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/40" },
-  2: { title: "Initié", diff: "Facile", color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/40" },
-  3: { title: "Apprenti", diff: "Facile", color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/40" },
-  4: { title: "Explorateur", diff: "Moyen", color: "text-amber-500 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/40" },
-  5: { title: "Aventurier", diff: "Moyen", color: "text-amber-500 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/40" },
-  6: { title: "Confirmé", diff: "Moyen", color: "text-amber-500 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/40" },
-  7: { title: "Expert", diff: "Difficile", color: "text-orange-500 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800/40" },
-  8: { title: "Maître", diff: "Difficile", color: "text-orange-500 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800/40" },
-  9: { title: "Légende", diff: "Difficile", color: "text-orange-500 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800/40" },
-  10: { title: "Demi-Dieu", diff: "Expert", color: "text-purple-500 bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/40" },
-  11: { title: "Titanesque", diff: "Expert", color: "text-purple-500 bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/40" },
-  12: { title: "Cosmique", diff: "Expert", color: "text-purple-500 bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/40" },
-  13: { title: "Suprême", diff: "Expert", color: "text-purple-500 bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/40" },
-  14: { title: "Omniscient", diff: "Expert", color: "text-purple-500 bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/40" },
-  15: { title: "Maître Absolu", diff: "Expert", color: "text-purple-500 bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/40" },
+  1: { title: "Tālib 'Ilm (Chercheur de savoir)", diff: "Facile", color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/40" },
+  2: { title: "Mubtadi' (Initiée)", diff: "Facile", color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/40" },
+  3: { title: "Mustami' (Auditeur appliqué)", diff: "Facile", color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/40" },
+  4: { title: "Rāghib (Enthousiaste)", diff: "Moyen", color: "text-amber-500 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/40" },
+  5: { title: "Sālik (Cheminant)", diff: "Moyen", color: "text-amber-500 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/40" },
+  6: { title: "Mutawassit (Intermédiaire)", diff: "Moyen", color: "text-amber-500 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/40" },
+  7: { title: "Mutafaqqih (Apprenant avisé)", diff: "Difficile", color: "text-orange-500 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800/40" },
+  8: { title: "Mutqin (Méthodique)", diff: "Difficile", color: "text-orange-500 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800/40" },
+  9: { title: "Hāfiz (Persévérant)", diff: "Difficile", color: "text-orange-500 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800/40" },
+  10: { title: "Hakīm (Sage)", diff: "Expert", color: "text-purple-500 bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/40" },
+  11: { title: "Faqīh (Fin Connaisseur)", diff: "Expert", color: "text-purple-500 bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/40" },
+  12: { title: "Muhaqqiq (Chercheur Érudit)", diff: "Expert", color: "text-purple-500 bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/40" },
+  13: { title: "'Ālim (Savant)", diff: "Expert", color: "text-purple-500 bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/40" },
+  14: { title: "'Allāmah (Grand Érudit)", diff: "Expert", color: "text-purple-500 bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/40" },
+  15: { title: "Ustādh Al-Akbar (Maître du Savoir)", diff: "Expert", color: "text-purple-500 bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/40" },
 };
 
 export default function LevelModeScreen({ user, onBack, onStartLevelQuiz }: LevelModeScreenProps) {

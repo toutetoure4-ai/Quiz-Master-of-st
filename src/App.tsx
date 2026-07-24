@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { UserProfile, Quiz, AppSettings, UserHistoryItem, Badge } from "./types";
 import { DEFAULT_QUIZZES, DEFAULT_LEADERBOARD, INITIAL_BADGES, CATEGORIES } from "./data";
+import { dbService } from "./lib/firebase";
+import { t, Language } from "./lib/i18n";
 import { motion, AnimatePresence } from "motion/react";
 
 // Sub-components
@@ -266,14 +268,113 @@ export default function App() {
         />
       ) : (
         /* 3. Show tabbed app interface */
-        <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+        <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden relative">
           
-          {/* Main Display Area */}
-          <div className="flex-1 overflow-hidden flex flex-col">
+          {/* Top Navigation Bar (High contrast & extra visible icons) */}
+          {activeTab !== "Settings" && activeTab !== "Boutique" && activeTab !== "Premium" && activeTab !== "AdminPanel" && (
+            <div className="w-full h-[68px] px-2 flex items-center justify-around border-b border-slate-200 dark:border-slate-800 bg-white/98 dark:bg-slate-950/98 backdrop-blur-md select-none shrink-0 z-40 shadow-sm">
+              
+              <button
+                id="nav-home"
+                onClick={() => setActiveTab("Accueil")}
+                className={`flex flex-col items-center justify-center gap-1 px-2 py-1 rounded-2xl cursor-pointer transition-all ${
+                  activeTab === "Accueil" 
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 font-black scale-105" 
+                    : "text-slate-600 dark:text-slate-300 hover:text-indigo-500 font-bold"
+                }`}
+              >
+                <Home className="w-5 h-5 stroke-[2.2]" />
+                <span className="text-[10px] tracking-tight">{t("nav_home", settings.language || "fr")}</span>
+              </button>
+
+              <button
+                id="nav-levels"
+                onClick={() => setActiveTab("Niveaux")}
+                className={`flex flex-col items-center justify-center gap-1 px-2 py-1 rounded-2xl cursor-pointer transition-all ${
+                  activeTab === "Niveaux" 
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 font-black scale-105" 
+                    : "text-slate-600 dark:text-slate-300 hover:text-indigo-500 font-bold"
+                }`}
+              >
+                <Sparkles className="w-5 h-5 stroke-[2.2]" />
+                <span className="text-[10px] tracking-tight font-extrabold">{t("nav_levels", settings.language || "fr")}</span>
+              </button>
+
+              <button
+                id="nav-explorer"
+                onClick={() => setActiveTab("Explorer")}
+                className={`flex flex-col items-center justify-center gap-1 px-2 py-1 rounded-2xl cursor-pointer transition-all ${
+                  activeTab === "Explorer" 
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 font-black scale-105" 
+                    : "text-slate-600 dark:text-slate-300 hover:text-indigo-500 font-bold"
+                }`}
+              >
+                <Search className="w-5 h-5 stroke-[2.2]" />
+                <span className="text-[10px] tracking-tight">{t("nav_explore", settings.language || "fr")}</span>
+              </button>
+
+              <button
+                id="nav-create"
+                onClick={() => setActiveTab("Créer")}
+                className={`flex flex-col items-center justify-center gap-1 px-2 py-1 rounded-2xl cursor-pointer transition-all ${
+                  activeTab === "Créer" 
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 font-black scale-105" 
+                    : "text-slate-600 dark:text-slate-300 hover:text-indigo-500 font-bold"
+                }`}
+              >
+                <PlusCircle className="w-5 h-5 stroke-[2.2]" />
+                <span className="text-[10px] tracking-tight">{t("nav_create", settings.language || "fr")}</span>
+              </button>
+
+              <button
+                id="nav-social"
+                onClick={() => setActiveTab("Social")}
+                className={`flex flex-col items-center justify-center gap-1 px-2 py-1 rounded-2xl cursor-pointer transition-all ${
+                  activeTab === "Social" 
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 font-black scale-105" 
+                    : "text-slate-600 dark:text-slate-300 hover:text-indigo-500 font-bold"
+                }`}
+              >
+                <Gamepad2 className="w-5 h-5 stroke-[2.2]" />
+                <span className="text-[10px] tracking-tight">{t("nav_social", settings.language || "fr")}</span>
+              </button>
+
+              <button
+                id="nav-leaderboard"
+                onClick={() => setActiveTab("Classement")}
+                className={`flex flex-col items-center justify-center gap-1 px-2 py-1 rounded-2xl cursor-pointer transition-all ${
+                  activeTab === "Classement" 
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 font-black scale-105" 
+                    : "text-slate-600 dark:text-slate-300 hover:text-indigo-500 font-bold"
+                }`}
+              >
+                <Trophy className="w-5 h-5 stroke-[2.2]" />
+                <span className="text-[10px] tracking-tight">{t("nav_leaderboard", settings.language || "fr")}</span>
+              </button>
+
+              <button
+                id="nav-profile"
+                onClick={() => setActiveTab("Profil")}
+                className={`flex flex-col items-center justify-center gap-1 px-2 py-1 rounded-2xl cursor-pointer transition-all ${
+                  activeTab === "Profil" 
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 font-black scale-105" 
+                    : "text-slate-600 dark:text-slate-300 hover:text-indigo-500 font-bold"
+                }`}
+              >
+                <UserIcon className="w-5 h-5 stroke-[2.2]" />
+                <span className="text-[10px] tracking-tight">{t("nav_profile", settings.language || "fr")}</span>
+              </button>
+
+            </div>
+          )}
+
+          {/* Main Display Area (Scrollable internally per screen) */}
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
             {activeTab === "Accueil" && user && (
               <HomeScreen 
                 user={user} 
                 quizzes={quizzes}
+                settings={settings}
                 onSelectQuiz={(quiz) => {
                   setSelectedQuizToPreview(quiz);
                   setIsLevelModeActive(false);
@@ -363,12 +464,21 @@ export default function App() {
               <ProfileScreen 
                 user={user}
                 onNavigateToSettings={() => setActiveTab("Settings")}
-                onUpdateUser={setUser}
+                onUpdateUser={(updated) => {
+                  setUser(updated);
+                  dbService.saveUserProfile(updated);
+                }}
+                onNavigateToPremium={() => setActiveTab("Premium")}
               />
             )}
 
             {activeTab === "Settings" && (
               <SettingsScreen 
+                user={user}
+                onUpdateUser={(updated) => {
+                  setUser(updated);
+                  dbService.saveUserProfile(updated);
+                }}
                 settings={settings}
                 onChangeSettings={(next) => setSettings(next)}
                 onLogout={handleLogout}
@@ -376,104 +486,6 @@ export default function App() {
               />
             )}
           </div>
-
-          {/* Bottom MD3 Navigation bar (Only visible when not actively playing a quiz) */}
-          {activeTab !== "Settings" && activeTab !== "Boutique" && activeTab !== "Premium" && activeTab !== "AdminPanel" && (
-            <div className="w-full h-[68px] px-4 flex items-center justify-around border-t border-slate-100 dark:border-slate-800/60 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md select-none shrink-0 z-40">
-              
-              <button
-                id="nav-home"
-                onClick={() => setActiveTab("Accueil")}
-                className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
-                  activeTab === "Accueil" 
-                    ? "text-blue-500 font-extrabold scale-105" 
-                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600"
-                }`}
-              >
-                <Home className="w-5 h-5" />
-                <span className="text-[10px] tracking-tight">Accueil</span>
-              </button>
-
-              <button
-                id="nav-levels"
-                onClick={() => setActiveTab("Niveaux")}
-                className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
-                  activeTab === "Niveaux" 
-                    ? "text-indigo-500 font-extrabold scale-105" 
-                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600"
-                }`}
-              >
-                <Sparkles className="w-5 h-5" />
-                <span className="text-[10px] tracking-tight font-bold">Niveaux IA</span>
-              </button>
-
-              <button
-                id="nav-explorer"
-                onClick={() => setActiveTab("Explorer")}
-                className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
-                  activeTab === "Explorer" 
-                    ? "text-blue-500 font-extrabold scale-105" 
-                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600"
-                }`}
-              >
-                <Search className="w-5 h-5" />
-                <span className="text-[10px] tracking-tight">Explorer</span>
-              </button>
-
-              <button
-                id="nav-create"
-                onClick={() => setActiveTab("Créer")}
-                className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
-                  activeTab === "Créer" 
-                    ? "text-blue-500 font-extrabold scale-105" 
-                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600"
-                }`}
-              >
-                <PlusCircle className="w-5 h-5" />
-                <span className="text-[10px] tracking-tight">Créer</span>
-              </button>
-
-              <button
-                id="nav-social"
-                onClick={() => setActiveTab("Social")}
-                className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
-                  activeTab === "Social" 
-                    ? "text-blue-500 font-extrabold scale-105" 
-                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600"
-                }`}
-              >
-                <Gamepad2 className="w-5 h-5" />
-                <span className="text-[10px] tracking-tight">Social</span>
-              </button>
-
-              <button
-                id="nav-leaderboard"
-                onClick={() => setActiveTab("Classement")}
-                className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
-                  activeTab === "Classement" 
-                    ? "text-blue-500 font-extrabold scale-105" 
-                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600"
-                }`}
-              >
-                <Trophy className="w-5 h-5" />
-                <span className="text-[10px] tracking-tight">Classement</span>
-              </button>
-
-              <button
-                id="nav-profile"
-                onClick={() => setActiveTab("Profil")}
-                className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
-                  activeTab === "Profil" 
-                    ? "text-blue-500 font-extrabold scale-105" 
-                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600"
-                }`}
-              >
-                <UserIcon className="w-5 h-5" />
-                <span className="text-[10px] tracking-tight">Profil</span>
-              </button>
-
-            </div>
-          )}
 
           {/* Material Design 3 Style Quiz Start Drawer Modal */}
           <AnimatePresence>
